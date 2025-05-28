@@ -1,0 +1,206 @@
+{
+  "name": "Projeto-01-Bot-Clima",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 9
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -600,
+        -20
+      ],
+      "id": "d74c562c-65c9-4270-9564-a271f8a899e2",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "cityName": "belo horizonte,br",
+        "language": "pt-br"
+      },
+      "type": "n8n-nodes-base.openWeatherMap",
+      "typeVersion": 1,
+      "position": [
+        -380,
+        -20
+      ],
+      "id": "2d4c4a0e-f4af-4514-ae6c-4a1a3718cf0d",
+      "name": "OpenWeatherMap",
+      "credentials": {
+        "openWeatherMapApi": {
+          "id": "YyfdbnLmCdLMLK0V",
+          "name": "OpenWeatherMap account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "b8199966-9109-4559-b137-1f5ff07fb8ff",
+              "name": "clima",
+              "value": "=Temperatura: {{ $json.main.temp }}\nTemperatura mínima: {{ $json.main.temp_min }}\nTemperatura máxima: {{ $json.main.temp_max }}\n\nSensação térmica: {{ $json.main.feels_like }}\n",
+              "type": "string"
+            },
+            {
+              "id": "498a7764-69c3-4445-90e2-06013166ebfe",
+              "name": "umidade",
+              "value": "={{ $json.main.humidity }}",
+              "type": "number"
+            },
+            {
+              "id": "e0e4611f-8368-4b8f-9bd4-5219841f6b28",
+              "name": "velocidade_vento",
+              "value": "={{ $json.wind.speed }}",
+              "type": "number"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -160,
+        -20
+      ],
+      "id": "7a48a485-3eb6-4ccd-981d-ff0301db6f94",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "sendTo": "gustavocosta.ds09@gmail.com",
+        "subject": "Previsão do Tempo Diária",
+        "emailType": "text",
+        "message": "={{ $json.text }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        420,
+        -20
+      ],
+      "id": "14225065-02e1-4667-a837-be8c6177c58b",
+      "name": "Gmail",
+      "webhookId": "2773412d-ad1b-435a-a18d-724d00f42dab",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "4twMFqoqz5z6VwFA",
+          "name": "Gmail account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=<Role>\nYou are Kyle, the weather and climate expert responsible for climate reports at CostaCore (a data and AI company), with over 25 years of experience in the field.\n</Role>\n\n<Instructions>\nYou must provide a concise and professional weather report to the CostaCore Marketing team.\n\nAlways begin the message with:\n\"Olá, equipe de Marketing da CostaCore. Sou Kyle, especialista em clima.\"\n\nAlways end the message with:\n\"Atenciosamente, Kyle.\"\n\nYour response must include:\n- Whether or not it is feasible to hold outdoor events;\n- Justification based on temperature, thermal sensation, humidity, and wind;\n- A confident, clear and respectful tone.\n\nFocus on delivering relevant weather data and its implications for outdoor events.\n</Instructions>\n\n<Data>\nWeather data: {{ $json.clima }}\nHumidity: {{ $json.umidade }}\nWind: {{ $json.velocidade_vento }} (m/s)\n</Data>\n\n<Language>\nWrite your answer in Portuguese (pt-BR). Use a maximum of 120 tokens.\n</Language>\n\n<Example>\nOlá, equipe de Marketing da CostaCore. Sou Kyle, especialista em clima.  \nCom base nos dados, é viável realizar eventos ao ar livre. A temperatura está em 24,58 °C, com sensação térmica similar. Vento moderado de 4,12 m/s e umidade de 58%. Condições estão favoráveis.  \nAtenciosamente,  \nKyle.\n</Example>"
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.6,
+      "position": [
+        60,
+        -20
+      ],
+      "id": "c4e893b0-e0c3-4ae6-9f05-2f83ad5c9cac",
+      "name": "Basic LLM Chain"
+    },
+    {
+      "parameters": {
+        "model": "llama-3.3-70b-versatile",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        0,
+        200
+      ],
+      "id": "7a307e0e-0db0-4950-b059-b55508e8ea17",
+      "name": "Groq Chat Model",
+      "credentials": {
+        "groqApi": {
+          "id": "TQAitPnnswuc1NyJ",
+          "name": "Groq account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "OpenWeatherMap",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenWeatherMap": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain": {
+      "main": [
+        [
+          {
+            "node": "Gmail",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "5e34fb7a-2d15-424a-b8a3-e21697674484",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "054cfac92a6c67ae6ad6d46fc3c0a88b4c8c06504d34f5a9cd5d424e547d84b1"
+  },
+  "id": "JEpMQh8i51HKHBn4",
+  "tags": []
+}
